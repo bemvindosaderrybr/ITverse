@@ -1,782 +1,532 @@
-<!DOCTYPE html>
+import React, { useState, useEffect, useRef } from ‘react’;
+import { Play, Pause, Volume2, VolumeX, Maximize, Search, Clock } from ‘lucide-react’;
 
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITverse - Bem vindos a Derry</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+const ITVerseStreaming = () => {
+const [currentEpisode, setCurrentEpisode] = useState(null);
+const [isPlaying, setIsPlaying] = useState(false);
+const [volume, setVolume] = useState(1);
+const [isMuted, setIsMuted] = useState(false);
+const [currentTime, setCurrentTime] = useState(0);
+const [duration, setDuration] = useState(0);
+const [searchQuery, setSearchQuery] = useState(’’);
+const videoRef = useRef(null);
+
+const episodes = [
+{ id: 1, title: ‘Episódio 1’, desc: ‘A chegada do mal’, thumb: ‘ep1’, videoId: ‘DEMO_VIDEO_1’ },
+{ id: 2, title: ‘Episódio 2’, desc: ‘Desaparecimentos’, thumb: ‘ep2’, videoId: ‘DEMO_VIDEO_2’ },
+{ id: 3, title: ‘Episódio 3’, desc: ‘O esgoto’, thumb: ‘ep3’, videoId: ‘DEMO_VIDEO_3’ },
+{ id: 4, title: ‘Episódio 4’, desc: ‘Memórias perdidas’, thumb: ‘ep4’, videoId: ‘DEMO_VIDEO_4’ },
+{ id: 5, title: ‘Episódio 5’, desc: ‘A casa de Neibolt’, thumb: ‘ep5’, videoId: ‘DEMO_VIDEO_5’ },
+{ id: 6, title: ‘Episódio 6’, desc: ‘Confronto’, thumb: ‘ep6’, videoId: ‘DEMO_VIDEO_6’ },
+{ id: 7, title: ‘Episódio 7’, desc: ‘O ritual’, thumb: ‘ep7’, videoId: ‘DEMO_VIDEO_7’ },
+{ id: 8, title: ‘Episódio 8’, desc: ‘Final’, thumb: ‘ep8’, videoId: ‘DEMO_VIDEO_8’ }
+];
+
+// Salvar progresso no localStorage
+useEffect(() => {
+const savedProgress = localStorage.getItem(‘itverse-progress’);
+if (savedProgress && !currentEpisode) {
+const progress = JSON.parse(savedProgress);
+setCurrentEpisode(episodes.find(ep => ep.id === progress.episodeId));
+setCurrentTime(progress.time);
+}
+}, []);
+
+useEffect(() => {
+if (currentEpisode && currentTime > 0) {
+localStorage.setItem(‘itverse-progress’, JSON.stringify({
+episodeId: currentEpisode.id,
+time: currentTime
+}));
+}
+}, [currentTime, currentEpisode]);
+
+const selectEpisode = (episode) => {
+setCurrentEpisode(episode);
+setCurrentTime(0);
+setIsPlaying(true);
+};
+
+const togglePlay = () => {
+if (videoRef.current) {
+if (isPlaying) {
+videoRef.current.pause();
+} else {
+videoRef.current.play();
+}
+setIsPlaying(!isPlaying);
+}
+};
+
+const toggleMute = () => {
+if (videoRef.current) {
+videoRef.current.muted = !isMuted;
+setIsMuted(!isMuted);
+}
+};
+
+const handleVolumeChange = (e) => {
+const newVolume = parseFloat(e.target.value);
+setVolume(newVolume);
+if (videoRef.current) {
+videoRef.current.volume = newVolume;
+}
+};
+
+const handleTimeUpdate = () => {
+if (videoRef.current) {
+setCurrentTime(videoRef.current.currentTime);
+setDuration(videoRef.current.duration);
+}
+};
+
+const handleSeek = (e) => {
+const rect = e.currentTarget.getBoundingClientRect();
+const pos = (e.clientX - rect.left) / rect.width;
+const newTime = pos * duration;
+if (videoRef.current) {
+videoRef.current.currentTime = newTime;
+setCurrentTime(newTime);
+}
+};
+
+const formatTime = (seconds) => {
+if (!seconds || isNaN(seconds)) return ‘0:00’;
+const mins = Math.floor(seconds / 60);
+const secs = Math.floor(seconds % 60);
+return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+const toggleFullscreen = () => {
+if (videoRef.current) {
+if (videoRef.current.requestFullscreen) {
+videoRef.current.requestFullscreen();
+}
+}
+};
+
+return (
+<div style={{
+backgroundColor: ‘#0A0A0A !important’,
+minHeight: ‘100vh’,
+color: ‘#E8E8E8’,
+fontFamily: ‘-apple-system, BlinkMacSystemFont, “Segoe UI”, sans-serif’
+}}>
+<style>{`
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
 
 ```
     body {
-        font-family: 'Roboto', sans-serif;
-        background-color: #0A0A0A !important;
-        color: #E8E8E8 !important;
-        overflow-x: hidden;
+      background: #0A0A0A !important;
+      overflow-x: hidden;
     }
 
-    /* HEADER */
-    header {
-        background: linear-gradient(180deg, #2D0000 0%, #0A0A0A 100%) !important;
-        padding: 20px 0;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        border-bottom: 2px solid #8B0000 !important;
-        box-shadow: 0 4px 20px rgba(139, 0, 0, 0.5);
+    .blood-drip {
+      position: relative;
+      display: inline-block;
     }
 
-    .header-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 0 40px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    .blood-drip::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      width: 2px;
+      height: 8px;
+      background: #8B0000;
+      animation: drip 3s ease-in-out infinite;
     }
 
-    .logo {
-        font-family: 'Playfair Display', serif;
-        font-size: 42px;
-        font-weight: 900;
-        color: #8B0000 !important;
-        text-shadow: 0 0 20px rgba(139, 0, 0, 0.8), 0 0 40px rgba(139, 0, 0, 0.4);
-        letter-spacing: 2px;
-    }
-
-    nav ul {
-        display: flex;
-        list-style: none;
-        gap: 40px;
-    }
-
-    nav a {
-        color: #E8E8E8 !important;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 16px;
-        transition: all 0.3s ease;
-        position: relative;
-    }
-
-    nav a:hover {
-        color: #8B0000 !important;
-        text-shadow: 0 0 10px rgba(139, 0, 0, 0.8);
-    }
-
-    nav a::after {
-        content: '';
-        position: absolute;
-        bottom: -5px;
-        left: 0;
-        width: 0;
-        height: 2px;
-        background-color: #8B0000 !important;
-        transition: width 0.3s ease;
-    }
-
-    nav a:hover::after {
-        width: 100%;
-    }
-
-    .search-bar {
-        background-color: #2D0000 !important;
-        border: 2px solid #500000 !important;
-        padding: 12px 20px;
-        border-radius: 25px;
-        color: #E8E8E8 !important;
-        width: 280px;
-        transition: all 0.3s ease;
-    }
-
-    .search-bar:focus {
-        outline: none;
-        border-color: #8B0000 !important;
-        box-shadow: 0 0 15px rgba(139, 0, 0, 0.6);
-    }
-
-    /* HERO SECTION */
-    .hero {
-        background: linear-gradient(rgba(10, 10, 10, 0.7), rgba(45, 0, 0, 0.9)), 
-                    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%232D0000" width="1200" height="600"/><circle cx="200" cy="100" r="3" fill="%238B0000" opacity="0.3"/><circle cx="800" cy="400" r="2" fill="%238B0000" opacity="0.5"/><circle cx="1000" cy="200" r="4" fill="%23500000" opacity="0.4"/></svg>');
-        background-size: cover;
-        background-position: center;
-        padding: 120px 40px;
-        text-align: center;
-        border-bottom: 3px solid #8B0000 !important;
-    }
-
-    .hero-content {
-        max-width: 900px;
-        margin: 0 auto;
-    }
-
-    .hero h1 {
-        font-family: 'Playfair Display', serif;
-        font-size: 72px;
-        color: #8B0000 !important;
-        text-shadow: 0 0 30px rgba(139, 0, 0, 0.9), 
-                     0 0 60px rgba(139, 0, 0, 0.5),
-                     0 4px 10px rgba(0, 0, 0, 0.8);
-        margin-bottom: 20px;
-        letter-spacing: 3px;
-    }
-
-    .hero p {
-        font-size: 22px;
-        color: #B0B0B0 !important;
-        margin-bottom: 40px;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-    }
-
-    .cta-button {
-        background-color: #8B0000 !important;
-        color: #E8E8E8 !important;
-        padding: 18px 50px;
-        border: none;
-        border-radius: 5px;
-        font-size: 18px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        box-shadow: 0 5px 20px rgba(139, 0, 0, 0.5);
-    }
-
-    .cta-button:hover {
-        background-color: #500000 !important;
-        box-shadow: 0 0 30px rgba(139, 0, 0, 0.9);
-        transform: translateY(-3px);
-    }
-
-    /* EPISODES SECTION */
-    .episodes-section {
-        padding: 80px 40px;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-
-    .section-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 48px;
-        color: #8B0000 !important;
-        margin-bottom: 50px;
-        text-align: center;
-        text-shadow: 0 0 20px rgba(139, 0, 0, 0.6);
-    }
-
-    .episodes-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 30px;
-    }
-
-    .episode-card {
-        background: linear-gradient(145deg, #2D0000 0%, #0A0A0A 100%) !important;
-        border: 2px solid #500000 !important;
-        border-radius: 10px;
-        overflow: hidden;
-        cursor: pointer;
-        transition: all 0.4s ease;
-        position: relative;
-    }
-
-    .episode-card:hover {
-        transform: translateY(-10px);
-        border-color: #8B0000 !important;
-        box-shadow: 0 10px 40px rgba(139, 0, 0, 0.7),
-                    0 0 60px rgba(139, 0, 0, 0.4);
-    }
-
-    .episode-thumbnail {
-        width: 100%;
-        height: 200px;
-        background: linear-gradient(135deg, #2D0000 0%, #500000 50%, #2D0000 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Playfair Display', serif;
-        font-size: 64px;
-        color: #8B0000 !important;
-        text-shadow: 0 0 20px rgba(139, 0, 0, 0.8);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .episode-thumbnail::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(139, 0, 0, 0.3) 0%, transparent 70%);
-        animation: pulse 3s ease-in-out infinite;
+    @keyframes drip {
+      0%, 100% { height: 0; opacity: 0; }
+      50% { height: 12px; opacity: 1; }
     }
 
     @keyframes pulse {
-        0%, 100% { transform: scale(1); opacity: 0.5; }
-        50% { transform: scale(1.2); opacity: 0.8; }
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
     }
 
-    .episode-info {
-        padding: 25px;
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
     }
 
-    .episode-number {
-        font-family: 'Playfair Display', serif;
-        font-size: 24px;
-        color: #8B0000 !important;
-        margin-bottom: 10px;
-        font-weight: 700;
+    .glow-red {
+      box-shadow: 0 0 20px rgba(139, 0, 0, 0.5) !important;
+      transition: all 0.3s ease !important;
     }
 
-    .episode-title {
-        font-size: 18px;
-        color: #E8E8E8 !important;
-        margin-bottom: 15px;
-        font-weight: 700;
+    .glow-red:hover {
+      box-shadow: 0 0 40px rgba(139, 0, 0, 0.8) !important;
+      transform: translateY(-5px) !important;
     }
 
-    .watch-button {
-        background-color: #500000 !important;
-        color: #E8E8E8 !important;
-        padding: 12px 30px;
-        border: 2px solid #8B0000 !important;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: 700;
-        transition: all 0.3s ease;
-        width: 100%;
-        font-size: 16px;
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #2D0000 !important;
+      height: 4px;
+      border-radius: 2px;
     }
 
-    .watch-button:hover {
-        background-color: #8B0000 !important;
-        box-shadow: 0 0 20px rgba(139, 0, 0, 0.8);
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      background: #8B0000 !important;
+      cursor: pointer;
+      border-radius: 50%;
     }
 
-    /* PLAYER MODAL */
-    .player-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(10, 10, 10, 0.98) !important;
-        z-index: 2000;
-        padding: 40px;
+    input[type="range"]::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      background: #8B0000 !important;
+      cursor: pointer;
+      border-radius: 50%;
+      border: none;
     }
 
-    .player-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
-        gap: 30px;
-        height: 100%;
+    .search-input {
+      background: #2D0000 !important;
+      border: 1px solid #500000 !important;
+      color: #E8E8E8 !important;
+      padding: 8px 12px;
+      border-radius: 4px;
+      outline: none;
+      transition: all 0.3s ease;
     }
 
-    .player-main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
+    .search-input:focus {
+      border-color: #8B0000 !important;
+      box-shadow: 0 0 10px rgba(139, 0, 0, 0.3) !important;
     }
 
-    .close-player {
-        align-self: flex-end;
-        background-color: #8B0000 !important;
-        color: #E8E8E8 !important;
-        border: none;
-        padding: 12px 30px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-        font-weight: 700;
-        margin-bottom: 20px;
-        transition: all 0.3s ease;
+    .video-container {
+      position: relative;
+      width: 100%;
+      background: #000 !important;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid #500000 !important;
     }
 
-    .close-player:hover {
-        background-color: #500000 !important;
-        box-shadow: 0 0 20px rgba(139, 0, 0, 0.8);
+    .demo-video {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: linear-gradient(135deg, #1a0000 0%, #0a0000 100%) !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #8B0000 !important;
+      font-weight: bold;
     }
+  `}</style>
 
-    .video-wrapper {
-        background-color: #0A0A0A !important;
-        border: 3px solid #8B0000 !important;
-        border-radius: 10px;
-        overflow: hidden;
-        flex: 1;
-        position: relative;
-        box-shadow: 0 10px 50px rgba(139, 0, 0, 0.5);
-    }
+  {/* HEADER */}
+  <header style={{
+    background: 'linear-gradient(180deg, #0A0A0A 0%, #1A0000 100%) !important',
+    padding: '20px 40px',
+    borderBottom: '2px solid #500000 !important',
+    position: 'sticky',
+    top: 0,
+    zIndex: 1000
+  }}>
+    <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
+      <h1 className="blood-drip" style={{
+        fontSize: '36px',
+        color: '#8B0000 !important',
+        fontWeight: 'bold',
+        letterSpacing: '2px',
+        textShadow: '0 0 20px rgba(139, 0, 0, 0.8), 0 0 40px rgba(139, 0, 0, 0.4)',
+        animation: 'pulse 2s ease-in-out infinite'
+      }}>
+        ITVERSE
+      </h1>
 
-    .video-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        color: #8B0000 !important;
-        font-family: 'Playfair Display', serif;
-        background: linear-gradient(135deg, #0A0A0A 0%, #2D0000 100%);
-    }
+      <nav style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
+        <a href="#inicio" style={{ color: '#E8E8E8', textDecoration: 'none', fontSize: '16px', transition: 'color 0.3s' }}>Início</a>
+        <a href="#episodios" style={{ color: '#B0B0B0', textDecoration: 'none', fontSize: '16px', transition: 'color 0.3s' }}>Episódios</a>
+      </nav>
 
-    .custom-controls {
-        background: linear-gradient(180deg, transparent 0%, #2D0000 100%) !important;
-        padding: 20px;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-    }
-
-    .control-btn {
-        background-color: #500000 !important;
-        color: #E8E8E8 !important;
-        border: 1px solid #8B0000 !important;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: 700;
-        transition: all 0.3s ease;
-    }
-
-    .control-btn:hover {
-        background-color: #8B0000 !important;
-        box-shadow: 0 0 15px rgba(139, 0, 0, 0.8);
-    }
-
-    .progress-bar {
-        flex: 1;
-        height: 8px;
-        background-color: #500000 !important;
-        border-radius: 10px;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .progress-filled {
-        height: 100%;
-        background-color: #8B0000 !important;
-        width: 0%;
-        transition: width 0.1s linear;
-        box-shadow: 0 0 10px rgba(139, 0, 0, 0.8);
-    }
-
-    .time-display {
-        color: #E8E8E8 !important;
-        font-size: 14px;
-        font-weight: 700;
-    }
-
-    .episode-sidebar {
-        width: 300px;
-        background-color: #2D0000 !important;
-        border: 2px solid #500000 !important;
-        border-radius: 10px;
-        padding: 20px;
-        overflow-y: auto;
-        max-height: calc(100vh - 80px);
-    }
-
-    .sidebar-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 24px;
-        color: #8B0000 !important;
-        margin-bottom: 20px;
-        text-align: center;
-    }
-
-    .sidebar-episode {
-        background-color: #0A0A0A !important;
-        border: 1px solid #500000 !important;
-        padding: 15px;
-        margin-bottom: 15px;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .sidebar-episode:hover {
-        border-color: #8B0000 !important;
-        box-shadow: 0 0 15px rgba(139, 0, 0, 0.5);
-    }
-
-    .sidebar-episode.active {
-        border-color: #8B0000 !important;
-        background-color: #500000 !important;
-        box-shadow: 0 0 20px rgba(139, 0, 0, 0.6);
-    }
-
-    /* FOOTER */
-    footer {
-        background-color: #2D0000 !important;
-        border-top: 3px solid #8B0000 !important;
-        padding: 50px 40px 30px;
-        margin-top: 80px;
-    }
-
-    .footer-content {
-        max-width: 1400px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 40px;
-        margin-bottom: 30px;
-    }
-
-    .footer-section h3 {
-        font-family: 'Playfair Display', serif;
-        color: #8B0000 !important;
-        font-size: 24px;
-        margin-bottom: 20px;
-    }
-
-    .footer-section p,
-    .footer-section a {
-        color: #B0B0B0 !important;
-        text-decoration: none;
-        display: block;
-        margin-bottom: 10px;
-        transition: color 0.3s ease;
-    }
-
-    .footer-section a:hover {
-        color: #8B0000 !important;
-    }
-
-    .social-links {
-        display: flex;
-        gap: 20px;
-    }
-
-    .social-links a {
-        width: 40px;
-        height: 40px;
-        background-color: #500000 !important;
-        border: 2px solid #8B0000 !important;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-
-    .social-links a:hover {
-        background-color: #8B0000 !important;
-        box-shadow: 0 0 15px rgba(139, 0, 0, 0.8);
-        transform: translateY(-3px);
-    }
-
-    .copyright {
-        text-align: center;
-        color: #B0B0B0 !important;
-        padding-top: 30px;
-        border-top: 1px solid #500000 !important;
-        font-size: 14px;
-    }
-
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
-        .header-container {
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        nav ul {
-            gap: 20px;
-        }
-
-        .hero h1 {
-            font-size: 42px;
-        }
-
-        .episodes-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .player-container {
-            flex-direction: column;
-        }
-
-        .episode-sidebar {
-            width: 100%;
-            max-height: 300px;
-        }
-    }
-</style>
-```
-
-</head>
-<body>
-    <!-- HEADER -->
-    <header>
-        <div class="header-container">
-            <div class="logo">ITverse</div>
-            <nav>
-                <ul>
-                    <li><a href="#home">Início</a></li>
-                    <li><a href="#series">Séries</a></li>
-                    <li><a href="#episodes">Episódios</a></li>
-                </ul>
-            </nav>
-            <input type="text" class="search-bar" placeholder="Buscar...">
-        </div>
-    </header>
-
-```
-<!-- HERO SECTION -->
-<section class="hero" id="home">
-    <div class="hero-content">
-        <h1>Bem vindos a Derry</h1>
-        <p>Uma jornada aterrorizante por Derry - 8 episódios de puro terror</p>
-        <button class="cta-button" onclick="openPlayer(1)">Assistir Agora</button>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <Search size={18} style={{ position: 'absolute', left: '12px', color: '#8B0000' }} />
+        <input
+          type="text"
+          placeholder="Buscar episódios..."
+          className="search-input"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ paddingLeft: '40px', width: '250px' }}
+        />
+      </div>
     </div>
-</section>
+  </header>
 
-<!-- EPISODES SECTION -->
-<section class="episodes-section" id="episodes">
-    <h2 class="section-title">Episódios</h2>
-    <div class="episodes-grid" id="episodesGrid"></div>
-</section>
+  {/* HERO SECTION */}
+  <section style={{
+    background: 'linear-gradient(180deg, rgba(45, 0, 0, 0.8) 0%, rgba(10, 10, 10, 0.95) 100%), url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M50 0 L60 40 L100 50 L60 60 L50 100 L40 60 L0 50 L40 40 Z\' fill=\'%238B0000\' opacity=\'0.03\'/%3E%3C/svg%3E") !important',
+    padding: '100px 40px',
+    textAlign: 'center',
+    borderBottom: '3px solid #500000 !important'
+  }}>
+    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <h2 style={{
+        fontSize: '56px',
+        color: '#8B0000 !important',
+        fontWeight: 'bold',
+        marginBottom: '20px',
+        textShadow: '0 0 30px rgba(139, 0, 0, 0.9)',
+        letterSpacing: '3px'
+      }}>
+        BEM-VINDOS A DERRY
+      </h2>
+      
+      <p style={{
+        fontSize: '18px',
+        color: '#B0B0B0',
+        marginBottom: '40px',
+        lineHeight: '1.6'
+      }}>
+        Uma criança desaparece. Então outra. E outra. Na pequena cidade de Derry, o mal assume a forma dos seus piores pesadelos. Pennywise retorna a cada 27 anos para se alimentar do medo das crianças.
+      </p>
 
-<!-- PLAYER MODAL -->
-<div class="player-modal" id="playerModal">
-    <div class="player-container">
-        <div class="player-main">
-            <button class="close-player" onclick="closePlayer()">✕ Fechar Player</button>
-            <div class="video-wrapper">
-                <div class="video-placeholder" id="videoContent">
-                    <span id="currentEpisodeDisplay">Episódio 1</span>
-                </div>
-                <div class="custom-controls">
-                    <button class="control-btn" onclick="playPause()">▶ Play</button>
-                    <div class="progress-bar" onclick="seek(event)">
-                        <div class="progress-filled" id="progressBar"></div>
-                    </div>
-                    <span class="time-display" id="timeDisplay">00:00 / 45:00</span>
-                    <button class="control-btn" onclick="toggleFullscreen()">⛶</button>
-                </div>
+      <button
+        onClick={() => selectEpisode(episodes[0])}
+        className="glow-red"
+        style={{
+          background: '#8B0000 !important',
+          color: '#E8E8E8',
+          border: 'none',
+          padding: '16px 40px',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}
+      >
+        <Play size={20} fill="#E8E8E8" />
+        ASSISTIR AGORA
+      </button>
+    </div>
+  </section>
+
+  {/* VIDEO PLAYER */}
+  {currentEpisode && (
+    <section id="player" style={{
+      padding: '60px 40px',
+      background: '#0A0A0A !important'
+    }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <h3 style={{ fontSize: '24px', color: '#8B0000 !important', marginBottom: '20px', fontWeight: 'bold' }}>
+          {currentEpisode.title} - {currentEpisode.desc}
+        </h3>
+
+        <div className="video-container">
+          <div className="demo-video">
+            <div style={{ textAlign: 'center' }}>
+              <Clock size={64} style={{ marginBottom: '20px', opacity: 0.5 }} />
+              <p style={{ fontSize: '18px', marginBottom: '10px' }}>PLAYER DEMO</p>
+              <p style={{ fontSize: '14px', opacity: 0.7 }}>
+                Substitua este elemento por:<br/>
+                &lt;iframe src="https://drive.google.com/file/d/SEU_VIDEO_ID/preview"<br/>
+                allow="autoplay" style="width:100%;aspect-ratio:16/9"&gt;&lt;/iframe&gt;
+              </p>
             </div>
+          </div>
+
+          {/* CONTROLES */}
+          <div style={{
+            background: '#2D0000 !important',
+            padding: '15px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '15px',
+            borderTop: '1px solid #500000 !important'
+          }}>
+            <button
+              onClick={togglePlay}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#E8E8E8',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+            </button>
+
+            <div style={{
+              flex: 1,
+              height: '4px',
+              background: '#500000 !important',
+              borderRadius: '2px',
+              cursor: 'pointer',
+              position: 'relative'
+            }}
+            onClick={handleSeek}>
+              <div style={{
+                width: `${(currentTime / duration) * 100 || 0}%`,
+                height: '100%',
+                background: '#8B0000 !important',
+                borderRadius: '2px'
+              }} />
+            </div>
+
+            <span style={{ fontSize: '14px', color: '#B0B0B0', minWidth: '100px' }}>
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
+
+            <button
+              onClick={toggleMute}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#E8E8E8',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+            </button>
+
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={volume}
+              onChange={handleVolumeChange}
+              style={{ width: '100px' }}
+            />
+
+            <button
+              onClick={toggleFullscreen}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#E8E8E8',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <Maximize size={24} />
+            </button>
+          </div>
         </div>
-        <div class="episode-sidebar">
-            <h3 class="sidebar-title">Todos os Episódios</h3>
-            <div id="sidebarEpisodes"></div>
-        </div>
+      </div>
+    </section>
+  )}
+
+  {/* EPISÓDIOS */}
+  <section id="episodios" style={{
+    padding: '60px 40px',
+    background: 'linear-gradient(180deg, #0A0A0A 0%, #1A0000 100%) !important'
+  }}>
+    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+      <h3 style={{
+        fontSize: '32px',
+        color: '#8B0000 !important',
+        marginBottom: '40px',
+        fontWeight: 'bold',
+        textShadow: '0 0 20px rgba(139, 0, 0, 0.6)'
+      }}>
+        TODOS OS EPISÓDIOS
+      </h3>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: '30px'
+      }}>
+        {episodes.filter(ep => 
+          ep.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          ep.desc.toLowerCase().includes(searchQuery.toLowerCase())
+        ).map((episode) => (
+          <div
+            key={episode.id}
+            className="glow-red"
+            style={{
+              background: '#2D0000 !important',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              cursor: 'pointer',
+              border: '2px solid #500000 !important'
+            }}
+            onClick={() => {
+              selectEpisode(episode);
+              document.getElementById('player')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            <div style={{
+              aspectRatio: '16/9',
+              background: 'linear-gradient(135deg, #1a0000 0%, #0a0000 100%) !important',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '48px',
+              color: '#500000 !important',
+              fontWeight: 'bold'
+            }}>
+              {episode.id}
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              <h4 style={{ fontSize: '18px', color: '#E8E8E8', marginBottom: '8px', fontWeight: 'bold' }}>
+                {episode.title}
+              </h4>
+              <p style={{ fontSize: '14px', color: '#B0B0B0', marginBottom: '15px' }}>
+                {episode.desc}
+              </p>
+              <button style={{
+                background: '#8B0000 !important',
+                color: '#E8E8E8',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '4px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                width: '100%'
+              }}>
+                Assistir
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
+  </section>
+
+  {/* FOOTER */}
+  <footer style={{
+    background: '#0A0A0A !important',
+    borderTop: '2px solid #500000 !important',
+    padding: '40px',
+    textAlign: 'center'
+  }}>
+    <p style={{ color: '#500000', fontSize: '14px' }}>
+      © 2025 ITVERSE. Todos os direitos reservados. Você flutuará também.
+    </p>
+  </footer>
 </div>
-
-<!-- FOOTER -->
-<footer>
-    <div class="footer-content">
-        <div class="footer-section">
-            <h3>ITverse</h3>
-            <p>A melhor plataforma de streaming para conteúdo de terror e suspense.</p>
-        </div>
-        <div class="footer-section">
-            <h3>Links Rápidos</h3>
-            <a href="#home">Início</a>
-            <a href="#series">Séries</a>
-            <a href="#episodes">Episódios</a>
-            <a href="#about">Sobre</a>
-        </div>
-        <div class="footer-section">
-            <h3>Redes Sociais</h3>
-            <div class="social-links">
-                <a href="#" title="Facebook">f</a>
-                <a href="#" title="Twitter">𝕏</a>
-                <a href="#" title="Instagram">📷</a>
-                <a href="#" title="YouTube">▶</a>
-            </div>
-        </div>
-        <div class="footer-section">
-            <h3>Contato</h3>
-            <p>contato@itverse.com</p>
-            <p>Suporte: suporte@itverse.com</p>
-        </div>
-    </div>
-    <div class="copyright">
-        <p>&copy; 2025 ITverse. Todos os direitos reservados.</p>
-    </div>
-</footer>
-
-<script>
-    // EPISODES DATA
-    const episodes = [
-        { id: 1, title: "O Despertar", duration: 2700 },
-        { id: 2, title: "Sombras do Passado", duration: 2700 },
-        { id: 3, title: "A Festa Macabra", duration: 2700 },
-        { id: 4, title: "Ecos na Escuridão", duration: 2700 },
-        { id: 5, title: "O Circo dos Horrores", duration: 2700 },
-        { id: 6, title: "Memórias Perdidas", duration: 2700 },
-        { id: 7, title: "A Verdade Revelada", duration: 2700 },
-        { id: 8, title: "Confronto Final", duration: 2700 }
-    ];
-
-    let currentEpisode = 1;
-    let isPlaying = false;
-    let currentTime = 0;
-    let progressInterval;
-
-    // RENDER EPISODES GRID
-    function renderEpisodes() {
-        const grid = document.getElementById('episodesGrid');
-        episodes.forEach(ep => {
-            const card = document.createElement('div');
-            card.className = 'episode-card';
-            card.innerHTML = `
-                <div class="episode-thumbnail">
-                    <span>${ep.id}</span>
-                </div>
-                <div class="episode-info">
-                    <div class="episode-number">Episódio ${ep.id}</div>
-                    <div class="episode-title">${ep.title}</div>
-                    <button class="watch-button" onclick="openPlayer(${ep.id})">▶ Assistir</button>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-    }
-
-    // RENDER SIDEBAR EPISODES
-    function renderSidebar() {
-        const sidebar = document.getElementById('sidebarEpisodes');
-        sidebar.innerHTML = '';
-        episodes.forEach(ep => {
-            const item = document.createElement('div');
-            item.className = `sidebar-episode ${ep.id === currentEpisode ? 'active' : ''}`;
-            item.innerHTML = `
-                <div style="color: #8B0000; font-weight: 700; margin-bottom: 5px;">EP ${ep.id}</div>
-                <div style="color: #E8E8E8; font-size: 14px;">${ep.title}</div>
-            `;
-            item.onclick = () => switchEpisode(ep.id);
-            sidebar.appendChild(item);
-        });
-    }
-
-    // OPEN PLAYER
-    function openPlayer(episodeId) {
-        currentEpisode = episodeId;
-        currentTime = 0;
-        document.getElementById('playerModal').style.display = 'block';
-        document.getElementById('currentEpisodeDisplay').textContent = `Episódio ${episodeId}: ${episodes[episodeId - 1].title}`;
-        renderSidebar();
-        updateTimeDisplay();
-    }
-
-    // CLOSE PLAYER
-    function closePlayer() {
-        document.getElementById('playerModal').style.display = 'none';
-        stopProgress();
-        isPlaying = false;
-    }
-
-    // SWITCH EPISODE
-    function switchEpisode(episodeId) {
-        currentEpisode = episodeId;
-        currentTime = 0;
-        isPlaying = false;
-        stopProgress();
-        document.getElementById('currentEpisodeDisplay').textContent = `Episódio ${episodeId}: ${episodes[episodeId - 1].title}`;
-        document.getElementById('progressBar').style.width = '0%';
-        renderSidebar();
-        updateTimeDisplay();
-    }
-
-    // PLAY/PAUSE
-    function playPause() {
-        const btn = event.target;
-        if (isPlaying) {
-            btn.textContent = '▶ Play';
-            stopProgress();
-        } else {
-            btn.textContent = '⏸ Pause';
-            startProgress();
-        }
-        isPlaying = !isPlaying;
-    }
-
-    // START PROGRESS
-    function startProgress() {
-        progressInterval = setInterval(() => {
-            const duration = episodes[currentEpisode - 1].duration;
-            currentTime++;
-            if (currentTime >= duration) {
-                currentTime = 0;
-                if (currentEpisode < episodes.length) {
-                    switchEpisode(currentEpisode + 1);
-                    playPause();
-                } else {
-                    stopProgress();
-                    isPlaying = false;
-                }
-            }
-            updateProgress();
-            updateTimeDisplay();
-        }, 1000);
-    }
-
-    // STOP PROGRESS
-    function stopProgress() {
-        clearInterval(progressInterval);
-    }
-
-    // UPDATE PROGRESS
-    function updateProgress() {
-        const duration = episodes[currentEpisode - 1].duration;
-        const percentage = (currentTime / duration) * 100;
-        document.getElementById('progressBar').style.width = percentage + '%';
-    }
-
-    // UPDATE TIME DISPLAY
-    function updateTimeDisplay() {
-        const duration = episodes[currentEpisode - 1].duration;
-        const currentMin = Math.floor(currentTime / 60);
-        const currentSec = currentTime % 60;
-        const totalMin = Math.floor(duration / 60);
-        const totalSec = duration % 60;
-        document.getElementById('timeDisplay').textContent = 
-            `${String(currentMin).padStart(2, '0')}:${String(currentSec).padStart(2, '0')} / ${String(totalMin).padStart(2, '0')}:${String(totalSec).padStart(2, '0')}`;
-    }
-
-    // SEEK
-    function seek(event) {
-        const bar = event.currentTarget;
-        const rect = bar.getBoundingClientRect();
-        const percentage = (event.clientX - rect.left) / rect.width;
-        const duration = episodes[currentEpisode - 1].duration;
-        currentTime = Math.floor(duration * percentage);
-        updateProgress();
-        updateTimeDisplay();
-    }
-
-    // FULLSCREEN
-    function toggleFullscreen() {
-        const wrapper = document.querySelector('.video-wrapper');
-        if (!document.fullscreenElement) {
-            wrapper.requestFullscreen();
-        } else {
-            document.exitFullscreen();
-        }
-    }
-
-    // INITIALIZE
-    renderEpisodes();
-</script>
 ```
 
-</body>
-</html>
+);
+};
+
+export default ITVerseStreaming;
