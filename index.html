@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ITverse — IT: BEM VINDOS A DERRY</title>
+<style>
+  /* === PALLETA PENNYWISE === */
+  :root{
+    --red:#c62828;
+    --dark:#191919;
+    --white:#f6f6f6;
+    --gold:#ff8f00;
+    --muted:#333;
+    --glass: rgba(255,255,255,0.06);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue";background:linear-gradient(180deg,#0f0f10 0%, #121212 60%);color:var(--white);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+
+  /* container */
+  .wrap{max-width:1100px;margin:30px auto;padding:20px}
+
+  /* header */
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo .mark{width:54px;height:54px;border-radius:10px;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--white);box-shadow:0 8px 30px rgba(198,40,40,0.18)}
+  .logo h1{font-size:20px;margin:0}
+  nav{display:flex;gap:12px;align-items:center}
+  .btn{padding:8px 14px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06);cursor:pointer}
+  .btn.primary{background:var(--red);border:0;color:#fff;box-shadow:0 8px 24px rgba(198,40,40,0.16)}
+
+  /* hero */
+  .hero{margin-top:28px;display:flex;gap:28px;align-items:center;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));padding:28px;border-radius:14px;position:relative;overflow:hidden}
+  .hero .cover{flex:0 0 280px;border-radius:10px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
+  .hero .cover img{width:100%;display:block}
+  .hero .info{flex:1}
+  .title{font-size:28px;margin:0 0 6px;letter-spacing:0.5px}
+  .meta{color:rgba(255,255,255,0.7);margin-bottom:12px}
+  .desc{line-height:1.5;color:rgba(255,255,255,0.85)}
+  .watch-btn{margin-top:18px;padding:12px 18px;border-radius:10px;background:linear-gradient(90deg,var(--red),var(--gold));border:0;cursor:pointer;font-weight:700}
+
+  /* series card hover */
+  .series-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;margin-top:22px}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:12px;transition:transform .36s cubic-bezier(.2,.9,.2,1),box-shadow .36s;cursor:pointer}
+  .card:hover{transform:translateY(-8px);box-shadow:0 24px 60px rgba(0,0,0,0.6)}
+  .card .thumb{height:120px;border-radius:8px;overflow:hidden;background:var(--glass);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.12);font-size:28px}
+
+  /* episode list modal */
+  .episode-list{margin-top:18px;background:rgba(0,0,0,0.4);padding:14px;border-radius:12px}
+  .ep{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px dashed rgba(255,255,255,0.04)}
+  .ep:last-child{border-bottom:0}
+  .play-ep{padding:8px 12px;border-radius:8px;border:0;background:var(--red);color:#fff;cursor:pointer}
+
+  /* modal player */
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:24px;z-index:2000;background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.9))}
+  .modal.show{display:flex}
+  .player{width:100%;max-width:1100px;border-radius:12px;overflow:hidden;background:#000;box-shadow:0 30px 80px rgba(0,0,0,0.8);position:relative}
+  .player video{width:100%;height:60vh;background:#000;display:block}
+  .player .controls{position:absolute;top:12px;right:12px;display:flex;gap:8px}
+  .icon-btn{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.06);border:0;color:#fff;cursor:pointer}
+  .close-btn{position:absolute;left:12px;top:12px;background:rgba(0,0,0,0.6);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06)}
+
+  /* balloons (hero background) */
+  .balloon-wrap{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .balloon{position:absolute;bottom:-120px;left:10%;width:56px;height:80px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:linear-gradient(180deg,var(--red),#fff);opacity:0.95;transform-origin:center;animation:floatUp 12s infinite ease-in}
+  .balloon.small{width:34px;height:48px;animation-duration:9s;left:35%}
+  .balloon.right{left:78%;width:48px;height:68px;animation-duration:14s}
+  .balloon::after{content:'';position:absolute;left:50%;bottom:-20px;width:2px;height:40px;background:rgba(255,255,255,0.06);transform:translateX(-50%)}
+  @keyframes floatUp{
+    0%{transform:translateY(0) rotate(-6deg);opacity:0}
+    10%{opacity:1}
+    50%{transform:translateY(-60vh) rotate(6deg)}
+    100%{transform:translateY(-120vh) rotate(-6deg);opacity:0}
+  }
+
+  /* responsive */
+  @media(max-width:720px){
+    .hero{flex-direction:column}
+    .hero .cover{width:100%}
+    .player video{height:50vh}
+  }
+
+  /* small flourish */
+  footer{margin-top:30px;color:rgba(255,255,255,0.5);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <div class="mark">IT</div>
+        <div>
+          <h1>ITverse</h1>
+          <div style="font-size:12px;color:rgba(255,255,255,0.65)">IT: BEM VINDOS A DERRY — Exclusivo</div>
+        </div>
+      </div>
+      <nav>
+        <button class="btn">Início</button>
+        <button class="btn">Séries</button>
+        <button class="btn">Sobre</button>
+        <button class="btn primary" id="openSeries">Assistir</button>
+      </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <div class="cover">
+        <!-- thumbnail: substitua pela imagem que quiser -->
+        <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder" alt="Capa da série">
+      </div>
+      <div class="info">
+        <h2 class="title">IT: BEM VINDOS A DERRY</h2>
+        <div class="meta">8 episódios • Temporada 1 • Exclusivo no ITverse</div>
+        <p class="desc">Série oficial: um mergulho em Derry. Assista episódio a episódio com a interface de streaming, player em tela cheia e lista organizada. Links dos episódios são carregados do seu Google Drive.</p>
+        <button class="watch-btn" id="goToSeries">Ver episódios</button>
+      </div>
+
+      <!-- balloons decor -->
+      <div class="balloon-wrap" aria-hidden="true">
+        <div class="balloon" style="left:12%; animation-delay:0s;"></div>
+        <div class="balloon small" style="left:30%; background:linear-gradient(180deg,#fff,var(--red)); animation-delay:2s;"></div>
+        <div class="balloon right" style="left:65%; background:linear-gradient(180deg,var(--gold),var(--red)); animation-delay:4s;"></div>
+      </div>
+    </section>
+
+    <!-- SERIES LIST -->
+    <section style="margin-top:18px">
+      <h3 style="margin:0 0 10px">Séries</h3>
+      <div class="series-list">
+        <article class="card" id="serieCard">
+          <div class="thumb">IT</div>
+          <h4 style="margin:10px 0 6px">IT: BEM VINDOS A DERRY</h4>
+          <div style="color:rgba(255,255,255,0.65);font-size:14px">8 episódios — drama / terror</div>
+        </article>
+
+        <!-- Placeholder para outras mini séries -->
+        <div class="card" style="opacity:.5">
+          <div class="thumb">—</div>
+          <h4 style="margin:10px 0 6px">Em breve</h4>
+          <div style="color:rgba(255,255,255,0.65);font-size:14px">Mais conteúdo chegando</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EPISODES -->
+    <section class="episode-list" id="episodesSection" style="display:none">
+      <h3 style="margin-top:0">Episódios — IT: BEM VINDOS A DERRY</h3>
+      <div id="listEps">
+        <!-- Aqui vem a lista populada pelo JS -->
+      </div>
+    </section>
+
+    <footer>
+      © ITverse — Demo • Para usar vídeos do Drive, veja instruções no topo.
+    </footer>
+  </div>
+
+  <!-- MODAL PLAYER -->
+  <div class="modal" id="modal">
+    <div class="player" role="dialog" aria-modal="true">
+      <button class="close-btn icon-btn" id="closeModal">✕</button>
+      <video id="videoPlayer" controls playsinline webkit-playsinline preload="metadata">
+        <!-- src será atribuído via JS -->
+        Seu navegador não suporta vídeo.
+      </video>
+      <div class="controls">
+        <button class="icon-btn" id="fsBtn" title="Tela cheia">⤢</button>
+        <button class="icon-btn" id="downloadBtn" title="Baixar (se permitido)">⇩</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ========== CONFIG (edite aqui) ========== */
+/*
+ Troque cada item do array `episodes` com:
+ { title: "Ep 1 - Título", driveLink: "https://drive.google.com/file/d/FILEID/view?usp=sharing" }
+ O script converte automaticamente para link direto. Se você já tem o link uc?export=download, pode usar direto.
+*/
+const episodes = [
+  { title:"Episódio 1 — O Retorno", driveLink:"https://drive.google.com/file/d/FILEID1/view?usp=sharing" },
+  { title:"Episódio 2 — Rua Neibolt", driveLink:"https://drive.google.com/file/d/FILEID2/view?usp=sharing" },
+  { title:"Episódio 3 — A Festa", driveLink:"https://drive.google.com/file/d/FILEID3/view?usp=sharing" },
+  { title:"Episódio 4 — Segredos", driveLink:"https://drive.google.com/file/d/FILEID4/view?usp=sharing" },
+  { title:"Episódio 5 — O Porão", driveLink:"https://drive.google.com/file/d/FILEID5/view?usp=sharing" },
+  { title:"Episódio 6 — No Lago", driveLink:"https://drive.google.com/file/d/FILEID6/view?usp=sharing" },
+  { title:"Episódio 7 — Confronto", driveLink:"https://drive.google.com/file/d/FILEID7/view?usp=sharing" },
+  { title:"Episódio 8 — Adeus a Derry", driveLink:"https://drive.google.com/file/d/FILEID8/view?usp=sharing" }
+];
+/* ======================================= */
+
+const episodesSection = document.getElementById('episodesSection');
+const listEps = document.getElementById('listEps');
+const openSeries = document.getElementById('openSeries');
+const goToSeries = document.getElementById('goToSeries');
+const serieCard = document.getElementById('serieCard');
+
+const modal = document.getElementById('modal');
+const video = document.getElementById('videoPlayer');
+const closeModal = document.getElementById('closeModal');
+const fsBtn = document.getElementById('fsBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+
+function driveToDirect(link){
+  // tenta extrair FILEID de vários formatos comuns
+  try{
+    const idMatch = link.match(/\/d\/([a-zA-Z0-9_-]+)/) || link.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if(idMatch && idMatch[1]) {
+      return `https://drive.google.com/uc?export=download&id=${idMatch[1]}`;
+    }
+    // se já vier no formato uc?export=...
+    if(link.includes('uc?export')) return link;
+    // se for já um link direto sem id, devolve original
+    return link;
+  } catch(e){ return link; }
+}
+
+function populateEpisodes(){
+  listEps.innerHTML = '';
+  episodes.forEach((ep, idx) => {
+    const div = document.createElement('div');
+    div.className = 'ep';
+    const left = document.createElement('div');
+    left.innerHTML = `<strong>${idx+1}. ${ep.title}</strong><div style="font-size:12px;color:rgba(255,255,255,0.6)">Duração: — • Drive</div>`;
+    const right = document.createElement('div');
+    const watchBtn = document.createElement('button');
+    watchBtn.className = 'play-ep';
+    watchBtn.textContent = 'Assistir';
+    watchBtn.onclick = () => openPlayer(ep);
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn';
+    copyBtn.textContent = 'Abrir Drive';
+    copyBtn.style.marginLeft='8px';
+    copyBtn.onclick = () => window.open(ep.driveLink, '_blank');
+    right.appendChild(watchBtn);
+    right.appendChild(copyBtn);
+    div.appendChild(left);
+    div.appendChild(right);
+    listEps.appendChild(div);
+  });
+}
+
+function openPlayer(ep){
+  const direct = driveToDirect(ep.driveLink);
+  video.src = direct;
+  video.currentTime = 0;
+  modal.classList.add('show');
+  // tenta abrir tela cheia ao carregar (alguns navegadores pedem interação do usuário)
+  setTimeout(()=> {
+    // play only after user interaction — aqui assumimos que o click no botão dá permissão
+    video.play().catch(()=>{/* autoplay pode ser bloqueado; usuário aperta play */});
+    // tentar fullscreen
+    requestFullscreen(document.querySelector('.player'));
+  }, 120);
+  // definir botão download (apenas aponta para o mesmo link; depende de permissões)
+  downloadBtn.onclick = () => { window.open(direct, '_blank'); };
+}
+
+function requestFullscreen(el){
+  if(!el) return;
+  const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+  if(rfs) rfs.call(el).catch(()=>{/*se falhar, ignora*/});
+}
+
+function exitFullscreen(){
+  const efs = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+  if(efs) efs.call(document).catch(()=>{/*ignorar*/});
+}
+
+closeModal.addEventListener('click', () => {
+  modal.classList.remove('show');
+  video.pause();
+  video.src = "";
+  exitFullscreen();
+});
+fsBtn.addEventListener('click', () => {
+  if(document.fullscreenElement) exitFullscreen();
+  else requestFullscreen(document.querySelector('.player'));
+});
+
+// navigation
+openSeries.addEventListener('click', ()=>{ episodesSection.style.display='block'; populateEpisodes(); window.scrollTo({top:document.getElementById('episodesSection').offsetTop-20, behavior:'smooth'}) });
+goToSeries.addEventListener('click', ()=> openSeries.click());
+serieCard.addEventListener('click', ()=> openSeries.click());
+
+// close modal when clicking outside player box
+modal.addEventListener('click', (e)=>{
+  if(e.target === modal) { closeModal.click(); }
+});
+
+/* small enhancement: keyboard ESC closes */
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && modal.classList.contains('show')) closeModal.click();
+});
+</script>
+</body>
+</html>
